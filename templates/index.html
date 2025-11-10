@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频处理应用</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-video"></i> 视频处理应用</h1>
+            <p>上传MP4视频文件，处理后支持在线播放和下载</p>
+        </header>
+
+        <main class="main-content">
+            <!-- 上传区域 -->
+            <section class="upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>点击选择文件或拖拽视频到这里</h3>
+                    <p>支持MP4格式，最大文件大小：100MB</p>
+                    <input type="file" id="fileInput" accept=".mp4" style="display: none;">
+                </div>
+                <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-details">
+                        <i class="fas fa-file-video"></i>
+                        <div>
+                            <span id="fileName"></span>
+                            <span id="fileSize"></span>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="uploadBtn">
+                        <i class="fas fa-upload"></i> 上传并处理
+                    </button>
+                </div>
+            </section>
+
+            <!-- 处理状态 -->
+            <section class="status-section" id="statusSection" style="display: none;">
+                <div class="status-card">
+                    <div class="status-header">
+                        <i class="fas fa-cog fa-spin"></i>
+                        <h3>视频处理中...</h3>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress" id="progressBar"></div>
+                    </div>
+                    <p id="statusMessage">正在处理您的视频，请稍候...</p>
+                </div>
+            </section>
+
+            <!-- 结果展示 -->
+            <section class="result-section" id="resultSection" style="display: none;">
+                <div class="result-header">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>视频处理完成！</h3>
+                </div>
+                
+                <div class="video-comparison">
+                    <div class="video-card">
+                        <h4>原始视频</h4>
+                        <video controls id="originalVideo">
+                            <source id="originalSource" type="video/mp4">
+                            您的浏览器不支持视频播放
+                        </video>
+                        <a href="#" id="downloadOriginal" class="btn btn-secondary">
+                            <i class="fas fa-download"></i> 下载原始视频
+                        </a>
+                    </div>
+                    
+                    <div class="video-card">
+                        <h4>处理后视频</h4>
+                        <video controls id="processedVideo">
+                            <source id="processedSource" type="video/mp4">
+                            您的浏览器不支持视频播放
+                        </video>
+                        <a href="#" id="downloadProcessed" class="btn btn-primary">
+                            <i class="fas fa-download"></i> 下载处理后视频
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-outline" id="newUploadBtn">
+                        <i class="fas fa-plus"></i> 上传新视频
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 视频处理应用 | 基于FastAPI构建</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/script.js"></script>
+</body>
+</html>
