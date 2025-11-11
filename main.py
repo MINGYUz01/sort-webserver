@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -7,7 +7,7 @@ import os
 import uuid
 import shutil
 from pathlib import Path
-from video_processor import VideoProcessor
+from video_processor import VideoProcessor, TrackingOptions
 
 # 创建应用实例
 app = FastAPI(title="视频处理应用", description="一个简单易用的视频上传、处理和下载应用")
@@ -35,7 +35,12 @@ async def read_root(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.post("/upload/")
-async def upload_video(file: UploadFile = File(...)):
+async def upload_video(
+    file: UploadFile = File(...),
+    show_trajectory: bool = Form(False),
+    trajectory_length: int = Form(30),
+    trajectory_color: str = Form("red")
+):
     """上传视频文件"""
     # 验证文件类型
     if not file.filename.lower().endswith('.mp4'):
@@ -55,6 +60,13 @@ async def upload_video(file: UploadFile = File(...)):
     original_path = UPLOAD_DIR / original_filename
     processed_path = PROCESSED_DIR / processed_filename
     
+    # 创建轨迹选项
+    tracking_options = TrackingOptions(
+        show_trajectory=show_trajectory,
+        trajectory_length=trajectory_length,
+        trajectory_color=trajectory_color
+    )
+    
     try:
         # 处理原始视频，确保Edge浏览器兼容性
         original_success = video_processor.process_original_video(temp_path, original_path)
@@ -62,8 +74,12 @@ async def upload_video(file: UploadFile = File(...)):
         if not original_success:
             raise HTTPException(status_code=500, detail="原始视频处理失败")
         
-        # 处理视频（优化版本）
-        processed_success = video_processor.process_video(original_path, processed_path)
+        # 处理视频（优化版本），传入轨迹选项
+        processed_success = video_processor.process_video(
+            original_path, 
+            processed_path,
+            tracking_options=tracking_options
+        )
         
         if not processed_success:
             raise HTTPException(status_code=500, detail="视频处理失败")
@@ -76,6 +92,9 @@ async def upload_video(file: UploadFile = File(...)):
             "file_id": file_id,
             "original_url": f"/download/original/{file_id}",
             "processed_url": f"/download/processed/{file_id}",
+            "show_trajectory": show_trajectory,
+            "trajectory_length": trajectory_length,
+            "trajectory_color": trajectory_color,
             "message": "视频上传和处理成功"
         }
     

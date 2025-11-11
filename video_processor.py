@@ -1,10 +1,17 @@
 import os
 import shutil
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Optional
 import cv2
 from ultralytics import YOLO
 from yolo_deepsort_processor import YOLODeepSORTProcessor
+
+# 定义轨迹选项模型以避免循环导入
+class TrackingOptions:
+    def __init__(self, show_trajectory: bool = False, trajectory_length: int = 30, trajectory_color: str = "red"):
+        self.show_trajectory = show_trajectory
+        self.trajectory_length = trajectory_length
+        self.trajectory_color = trajectory_color
 
 class VideoProcessor:
     """视频处理类，负责视频格式转换和优化"""
@@ -13,13 +20,15 @@ class VideoProcessor:
         self.supported_formats = ['.mp4', '.avi', '.mov', '.mkv']
         self.processor = YOLODeepSORTProcessor('weights/best.pt')
     
-    def process_video(self, input_path: Path, output_path: Path) -> bool:
+    def process_video(self, input_path: Path, output_path: Path, 
+                     tracking_options: Optional[TrackingOptions] = None) -> bool:
         """
-        处理视频文件，优化格式以兼容Edge浏览器
+        处理视频文件，应用目标检测和跟踪
         
         Args:
             input_path: 输入视频路径
             output_path: 输出视频路径
+            tracking_options: 轨迹显示选项
             
         Returns:
             bool: 处理是否成功
@@ -53,22 +62,40 @@ class VideoProcessor:
                     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 备用编码器
                 out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
                 
+                frame_count = 0
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                
                 # 读取并写入每一帧
                 while True:
                     ret, frame = cap.read()
                     if not ret:
                         break
-                    _, processed_frame = self.processor.process_detection_results(frame)
+                    
+                    # 根据轨迹选项处理帧
+                    if tracking_options and tracking_options.show_trajectory:
+                        # 使用轨迹显示功能
+                        _, processed_frame = self.processor.process_detection_results(
+                            frame, 
+                            trajectory_length=tracking_options.trajectory_length,
+                            trajectory_color=tracking_options.trajectory_color
+                        )
+                    else:
+                        # 使用普通处理
+                        _, processed_frame = self.processor.process_detection_results(frame)
+                    
                     out.write(processed_frame)
+                    
+                    frame_count += 1
+                    if frame_count % 10 == 0:
+                        print(f"已处理 {frame_count}/{total_frames} 帧")
                 
                 # 释放资源
                 cap.release()
                 out.release()
                 
                 # 检查输出文件是否创建成功
-        
                 if output_path.exists() and output_path.stat().st_size > 0:
-                    print(f"视频处理成功: {output_path}")
+                    print(f"视频处理完成: {output_path}")
                     return True
                 else:
                     print("输出文件创建失败")
@@ -116,13 +143,6 @@ class VideoProcessor:
                 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 
-                # 确保分辨率为偶数（某些浏览器需要）
-                if width % 2 != 0:
-                    width = width - 1
-                if height % 2 != 0:
-                    height = height - 1
-                
-                # 创建视频写入器，使用Edge兼容的编码器
                 # 优先使用H.264编码器，确保Edge浏览器兼容性
                 try:
                     fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264编码

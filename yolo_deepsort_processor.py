@@ -3,6 +3,7 @@ import os
 import torch
 from ultralytics import YOLO
 from tqdm import tqdm
+from collections import defaultdict, deque
 from deep_sort.utils.parser import get_config
 from deep_sort.deep_sort import DeepSort
 import numpy as np
@@ -24,6 +25,7 @@ class YOLODeepSORTProcessor:
         self.model = YOLO(model_path)
         self.deepsort = self._initialize_deepsort(use_cuda)
         self.track_history = {}
+        self.trajectory_history = defaultdict(deque)  # 每个轨迹ID保存轨迹位置，无长度限制
         
     def _initialize_deepsort(self, use_cuda):
         """初始化DeepSort跟踪器"""
@@ -39,12 +41,15 @@ class YOLODeepSORTProcessor:
             use_cuda=use_cuda
         )
     
-    def process_detection_results(self, image, min_confidence=0.25):
+    def process_detection_results(self, image, min_confidence=0.25, 
+                                 trajectory_length=0, trajectory_color="red"):
         """处理单帧图像的目标检测和跟踪
         
         Args:
             image: 输入图像 (BGR格式)
             min_confidence: 最小置信度阈值
+            trajectory_length: 轨迹长度（帧数），0表示不绘制轨迹
+            trajectory_color: 轨迹颜色
             
         Returns:
             tuple: (检测结果列表, 处理后的图像)
@@ -58,8 +63,16 @@ class YOLODeepSORTProcessor:
         # 使用DeepSort进行目标跟踪
         tracking_results = self._deepsort_tracking(detection_results, processed_image)
         
-        # 在图像上绘制结果
+        # 如果需要绘制轨迹，则更新轨迹历史记录
+        if trajectory_length != 0:  # 0表示不绘制轨迹，非0表示绘制轨迹
+            self._update_trajectory_history(tracking_results)
+        
+        # 在图像上绘制检测结果
         self._draw_detections(processed_image, tracking_results)
+        
+        # 如果需要绘制轨迹，则在图像上绘制轨迹
+        if trajectory_length != 0:  # 0表示不绘制轨迹，非0表示绘制轨迹
+            self._draw_trajectories(processed_image, trajectory_length, trajectory_color)
         
         return tracking_results, processed_image
     
@@ -135,6 +148,62 @@ class YOLODeepSORTProcessor:
             ))
         
         return tracking_results
+    
+    def _update_trajectory_history(self, tracking_results):
+        """更新轨迹历史记录
+        
+        Args:
+            tracking_results: 当前帧的跟踪结果
+        """
+        for x1, y1, x2, y2, class_name, track_id in tracking_results:
+            # 计算边界框中心点
+            center_x = (x1 + x2) // 2
+            center_y = (y1 + y2) // 2
+            
+            # 更新轨迹历史
+            self.trajectory_history[track_id].append((center_x, center_y))
+    
+    def _draw_trajectories(self, image, trajectory_length=30, trajectory_color="red"):
+        """在图像上绘制轨迹
+        
+        Args:
+            image: 要绘制的图像
+            trajectory_length: 轨迹长度（帧数），-1表示无限长度
+            trajectory_color: 轨迹颜色
+        """
+        # 颜色映射
+        color_map = {
+            "red": (0, 0, 255),
+            "green": (0, 255, 0),
+            "blue": (255, 0, 0),
+            "yellow": (0, 255, 255),
+            "cyan": (255, 255, 0),
+            "magenta": (255, 0, 255)
+        }
+        
+        color = color_map.get(trajectory_color.lower(), (0, 0, 255))  # 默认红色
+        
+        # 绘制每个轨迹ID的轨迹
+        for track_id, trajectory in self.trajectory_history.items():
+            if len(trajectory) > 1:
+                # 处理无限长度
+                if trajectory_length == -1:
+                    # 无限长度：绘制所有轨迹点
+                    recent_trajectory = list(trajectory)
+                else:
+                    # 有限长度：只绘制最近的轨迹点
+                    recent_trajectory = list(trajectory)[-trajectory_length:]
+                
+                # 绘制轨迹线
+                for i in range(1, len(recent_trajectory)):
+                    cv2.line(image, 
+                            recent_trajectory[i-1], 
+                            recent_trajectory[i], 
+                            color, 2, cv2.LINE_AA)
+                
+                # 在轨迹终点绘制小圆点
+                if recent_trajectory:
+                    cv2.circle(image, recent_trajectory[-1], 3, color, -1)
     
     def _draw_detections(self, image, tracking_results):
         """在图像上绘制检测和跟踪结果

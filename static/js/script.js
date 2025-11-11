@@ -25,6 +25,7 @@ const newUploadBtn = document.getElementById('newUploadBtn');
 // 事件监听器
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    initializeTrackingOptions();
 });
 
 function initializeEventListeners() {
@@ -44,6 +45,44 @@ function initializeEventListeners() {
     
     // 新上传按钮事件
     newUploadBtn.addEventListener('click', resetInterface);
+}
+
+// 轨迹显示选项初始化
+function initializeTrackingOptions() {
+    const showTrajectory = document.getElementById('showTrajectory');
+    const trajectoryLength = document.getElementById('trajectoryLength');
+    const trajectoryColor = document.getElementById('trajectoryColor');
+    
+    // 初始状态设置
+    updateTrackingOptionsState();
+    
+    // 监听轨迹显示复选框变化
+    showTrajectory.addEventListener('change', updateTrackingOptionsState);
+}
+
+// 更新轨迹选项状态
+function updateTrackingOptionsState() {
+    const showTrajectory = document.getElementById('showTrajectory').checked;
+    const trajectoryLength = document.getElementById('trajectoryLength');
+    const trajectoryColor = document.getElementById('trajectoryColor');
+    
+    if (showTrajectory) {
+        // 启用轨迹长度和颜色选择
+        trajectoryLength.disabled = false;
+        trajectoryColor.disabled = false;
+        trajectoryLength.style.opacity = '1';
+        trajectoryColor.style.opacity = '1';
+        trajectoryLength.parentElement.style.opacity = '1';
+        trajectoryColor.parentElement.style.opacity = '1';
+    } else {
+        // 禁用轨迹长度和颜色选择
+        trajectoryLength.disabled = true;
+        trajectoryColor.disabled = true;
+        trajectoryLength.style.opacity = '0.5';
+        trajectoryColor.style.opacity = '0.5';
+        trajectoryLength.parentElement.style.opacity = '0.5';
+        trajectoryColor.parentElement.style.opacity = '0.5';
+    }
 }
 
 // 文件选择处理
@@ -132,6 +171,15 @@ async function handleUpload() {
         // 创建FormData
         const formData = new FormData();
         formData.append('file', currentFile);
+        
+        // 添加轨迹显示选项
+        const showTrajectory = document.getElementById('showTrajectory').checked;
+        const trajectoryLength = document.getElementById('trajectoryLength').value;
+        const trajectoryColor = document.getElementById('trajectoryColor').value;
+        
+        formData.append('show_trajectory', showTrajectory.toString());
+        formData.append('trajectory_length', trajectoryLength);
+        formData.append('trajectory_color', trajectoryColor);
         
         // 发送上传请求
         const response = await fetch('/upload/', {

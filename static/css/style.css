@@ -299,6 +299,100 @@ body {
     padding: 20px 0;
 }
 
+/* 轨迹显示选项样式 */
+.tracking-options {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    border-left: 4px solid #667eea;
+}
+
+.tracking-options h4 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.tracking-options h4 i {
+    color: #667eea;
+    margin-right: 8px;
+}
+
+.option-group {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.option-group:last-child {
+    margin-bottom: 0;
+}
+
+.option-group label {
+    font-weight: 600;
+    color: #555;
+    min-width: 120px;
+}
+
+.option-group select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    font-size: 0.9rem;
+    min-width: 120px;
+}
+
+.option-group select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: #555;
+    gap: 10px;
+}
+
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkmark::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.checkbox-label:hover .checkmark {
+    border-color: #667eea;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
     .container {
@@ -309,13 +403,13 @@ body {
         font-size: 2rem;
     }
     
+    .upload-area {
+        padding: 40px 20px;
+    }
+    
     .video-comparison {
         grid-template-columns: 1fr;
         gap: 20px;
-    }
-    
-    .upload-area {
-        padding: 40px 20px;
     }
     
     .file-info {
@@ -326,6 +420,26 @@ body {
     
     .file-details {
         justify-content: center;
+    }
+    
+    .tracking-options {
+        margin: 15px 0;
+        padding: 15px;
+    }
+    
+    .option-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .option-group label {
+        min-width: auto;
+    }
+    
+    .option-group select {
+        width: 100%;
+        min-width: auto;
     }
 }
 
@@ -359,4 +473,22 @@ body {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* 禁用状态的轨迹选项样式 */
+.option-group select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: #f8f9fa;
+    border-color: #ddd;
+}
+
+.option-group:has(select:disabled) {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.option-group:has(select:disabled) label {
+    opacity: 0.7;
+    cursor: not-allowed;
 }

@@ -31,6 +31,41 @@
                             <span id="fileSize"></span>
                         </div>
                     </div>
+                    
+                    <!-- 轨迹显示选项 -->
+                    <div class="tracking-options">
+                        <h4><i class="fas fa-route"></i> 轨迹显示选项</h4>
+                        <div class="option-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="showTrajectory" checked>
+                                <span class="checkmark"></span>
+                                显示检测对象运动轨迹
+                            </label>
+                        </div>
+                        <div class="option-group">
+                            <label>轨迹长度（帧数）:</label>
+                            <select id="trajectoryLength">
+                                <option value="10">10帧</option>
+                                <option value="20">20帧</option>
+                                <option value="30" selected>30帧</option>
+                                <option value="50">50帧</option>
+                                <option value="100">100帧</option>
+                                <option value="-1">无限</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label>轨迹颜色:</label>
+                            <select id="trajectoryColor">
+                                <option value="red" selected>红色</option>
+                                <option value="green">绿色</option>
+                                <option value="blue">蓝色</option>
+                                <option value="yellow">黄色</option>
+                                <option value="cyan">青色</option>
+                                <option value="magenta">洋红色</option>
+                            </select>
+                        </div>
+                    </div>
+                    
                     <button class="btn btn-primary" id="uploadBtn">
                         <i class="fas fa-upload"></i> 上传并处理
                     </button>
