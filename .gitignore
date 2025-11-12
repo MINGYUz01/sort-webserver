@@ -164,7 +164,7 @@ processed/
 *.avi.tmp
 
 # Model weights (large files, should be downloaded separately)
-# weights/*.pt
+weights/*.pt
 !weights/README.md
 
 # Log files
