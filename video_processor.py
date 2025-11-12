@@ -20,19 +20,23 @@ class VideoProcessor:
         self.supported_formats = ['.mp4', '.avi', '.mov', '.mkv']
         self.processor = YOLODeepSORTProcessor('weights/best.pt')
     
-    def process_video(self, input_path: Path, output_path: Path, 
+    def process_video(self, input_path: Path, original_output_path: Path, processed_output_path: Path, 
                      tracking_options: Optional[TrackingOptions] = None) -> bool:
         """
-        处理视频文件，应用目标检测和跟踪
+        处理视频文件，同时保存原始视频（确保Edge浏览器兼容性）和处理后的视频（带目标检测和跟踪）
         
         Args:
             input_path: 输入视频路径
-            output_path: 输出视频路径
+            original_output_path: 原始视频输出路径（仅转换格式）
+            processed_output_path: 处理后视频输出路径（带检测和跟踪）
             tracking_options: 轨迹显示选项
             
         Returns:
             bool: 处理是否成功
         """
+        # 清除轨迹历史
+        self.processor.trajectory_history.clear()
+            
         try:
             # 检查输入文件是否存在
             if not input_path.exists():
@@ -60,7 +64,10 @@ class VideoProcessor:
                     fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264编码
                 except:
                     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 备用编码器
-                out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+                
+                # 创建两个输出视频写入器
+                original_out = cv2.VideoWriter(str(original_output_path), fourcc, fps, (width, height))
+                processed_out = cv2.VideoWriter(str(processed_output_path), fourcc, fps, (width, height))
                 
                 frame_count = 0
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -71,7 +78,10 @@ class VideoProcessor:
                     if not ret:
                         break
                     
-                    # 根据轨迹选项处理帧
+                    # 写入原始帧到原始视频
+                    original_out.write(frame)
+                    
+                    # 根据轨迹选项处理帧并写入处理后的视频
                     if tracking_options and tracking_options.show_trajectory:
                         # 使用轨迹显示功能
                         _, processed_frame = self.processor.process_detection_results(
@@ -80,10 +90,10 @@ class VideoProcessor:
                             trajectory_color=tracking_options.trajectory_color
                         )
                     else:
-                        # 使用普通处理
+                        # 使用普通处理（不显示轨迹）
                         _, processed_frame = self.processor.process_detection_results(frame)
                     
-                    out.write(processed_frame)
+                    processed_out.write(processed_frame)
                     
                     frame_count += 1
                     if frame_count % 10 == 0:
@@ -91,95 +101,36 @@ class VideoProcessor:
                 
                 # 释放资源
                 cap.release()
-                out.release()
+                original_out.release()
+                processed_out.release()
                 
                 # 检查输出文件是否创建成功
-                if output_path.exists() and output_path.stat().st_size > 0:
-                    print(f"视频处理完成: {output_path}")
+                original_success = original_output_path.exists() and original_output_path.stat().st_size > 0
+                processed_success = processed_output_path.exists() and processed_output_path.stat().st_size > 0
+                
+                if original_success and processed_success:
+                    print(f"原始视频处理完成: {original_output_path}")
+                    print(f"处理后视频完成: {processed_output_path}")
                     return True
                 else:
-                    print("输出文件创建失败")
+                    if not original_success:
+                        print("原始视频输出文件创建失败")
+                    if not processed_success:
+                        print("处理后视频输出文件创建失败")
                     return False
                     
             except ImportError:
                 # 如果没有OpenCV，使用简单的文件复制
                 print("OpenCV未安装，使用简单文件复制")
-                shutil.copy2(input_path, output_path)
+                shutil.copy2(input_path, original_output_path)
+                shutil.copy2(input_path, processed_output_path)
                 return True
                 
         except Exception as e:
             print(f"视频处理异常: {str(e)}")
             return False
     
-    def process_original_video(self, input_path: Path, output_path: Path) -> bool:
-        """
-        处理原始视频文件，确保Edge浏览器兼容性
-        
-        Args:
-            input_path: 输入视频路径
-            output_path: 输出视频路径
-            
-        Returns:
-            bool: 处理是否成功
-        """
-        try:
-            # 检查输入文件是否存在
-            if not input_path.exists():
-                print(f"输入文件不存在: {input_path}")
-                return False
-            
-            # 检查是否安装了OpenCV
-            try:
-                import cv2
-                # 使用OpenCV进行视频处理
-                cap = cv2.VideoCapture(str(input_path))
-                
-                if not cap.isOpened():
-                    print("无法打开视频文件")
-                    return False
-                
-                # 获取视频信息
-                fps = cap.get(cv2.CAP_PROP_FPS)
-                width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                
-                # 优先使用H.264编码器，确保Edge浏览器兼容性
-                try:
-                    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264编码
-                except:
-                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 备用编码器
-                
-                out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
-                
-                # 读取并写入每一帧
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-                    out.write(frame)
-                
-                # 释放资源
-                cap.release()
-                out.release()
-                
-                # 检查输出文件是否创建成功
-                if output_path.exists() and output_path.stat().st_size > 0:
-                    print(f"原始视频处理成功: {output_path}")
-                    return True
-                else:
-                    print("原始视频输出文件创建失败")
-                    return False
-                    
-            except ImportError:
-                # 如果没有OpenCV，使用简单的文件复制
-                print("OpenCV未安装，使用简单文件复制")
-                shutil.copy2(input_path, output_path)
-                return True
-                
-        except Exception as e:
-            print(f"原始视频处理异常: {str(e)}")
-            return False
-    
+
     def get_video_info(self, video_path: Path) -> dict:
         """获取视频信息"""
         try:
@@ -235,67 +186,7 @@ class VideoProcessor:
         
         return {}
     
-    def compress_video(self, input_path: Path, output_path: Path, target_size_mb: int = 10) -> bool:
-        """
-        压缩视频到指定大小
-        
-        Args:
-            input_path: 输入视频路径
-            output_path: 输出视频路径
-            target_size_mb: 目标大小（MB）
-            
-        Returns:
-            bool: 压缩是否成功
-        """
-        try:
-            # 检查是否安装了OpenCV
-            try:
-                import cv2
-                cap = cv2.VideoCapture(str(input_path))
-                
-                if not cap.isOpened():
-                    return False
-                
-                # 获取视频信息
-                fps = cap.get(cv2.CAP_PROP_FPS)
-                width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                
-                # 降低分辨率进行压缩
-                new_width = max(320, width // 2)
-                new_height = max(240, height // 2)
-                
-                # 创建视频写入器，使用更兼容的编码器
-                try:
-                    fourcc = cv2.VideoWriter_fourcc(*'avc1')  # H.264编码
-                except:
-                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 备用编码器
-                out = cv2.VideoWriter(str(output_path), fourcc, fps, (new_width, new_height))
-                
-                # 读取并写入每一帧（降低分辨率）
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
-                    
-                    # 调整帧大小
-                    resized_frame = cv2.resize(frame, (new_width, new_height))
-                    out.write(resized_frame)
-                
-                # 释放资源
-                cap.release()
-                out.release()
-                
-                return output_path.exists() and output_path.stat().st_size > 0
-                
-            except ImportError:
-                # 如果没有OpenCV，使用简单文件复制
-                shutil.copy2(input_path, output_path)
-                return True
-                
-        except Exception as e:
-            print(f"视频压缩失败: {str(e)}")
-            return False
+
 
 # 简单的视频处理函数，用于测试
 def simple_process_video(input_path: Path, output_path: Path) -> bool:
