@@ -68,20 +68,15 @@ async def upload_video(
     )
     
     try:
-        # 处理原始视频，确保Edge浏览器兼容性
-        original_success = video_processor.process_original_video(temp_path, original_path)
-        
-        if not original_success:
-            raise HTTPException(status_code=500, detail="原始视频处理失败")
-        
-        # 处理视频（优化版本），传入轨迹选项
-        processed_success = video_processor.process_video(
-            original_path, 
+        # 同时处理原始视频和处理后的视频
+        success = video_processor.process_video(
+            temp_path, 
+            original_path,
             processed_path,
             tracking_options=tracking_options
         )
         
-        if not processed_success:
+        if not success:
             raise HTTPException(status_code=500, detail="视频处理失败")
         
         # 清理临时文件
@@ -99,14 +94,13 @@ async def upload_video(
         }
     
     except Exception as e:
-        # 只清理临时文件，保留已成功处理的文件
+        # 清理临时文件
         if temp_path.exists():
             temp_path.unlink()
-        # 只有在原始视频处理失败时才删除原始文件
+        # 只有在处理失败时才删除输出文件
         if not original_path.exists() or original_path.stat().st_size == 0:
             if original_path.exists():
                 original_path.unlink()
-        # 只有在视频处理失败时才删除处理后的文件
         if not processed_path.exists() or processed_path.stat().st_size == 0:
             if processed_path.exists():
                 processed_path.unlink()
@@ -118,6 +112,10 @@ async def upload_video(
         print(f"处理后文件状态: {processed_path.exists()}")
         
         raise HTTPException(status_code=500, detail=f"处理错误: {str(e)}")
+    
+    # 清理临时文件
+    if temp_path.exists():
+        temp_path.unlink()
 
 @app.get("/download/original/{file_id}")
 async def download_original(file_id: str):
