@@ -5,6 +5,7 @@ from typing import Tuple, Optional
 import cv2
 from ultralytics import YOLO
 from yolo_deepsort_processor import YOLODeepSORTProcessor
+from yolo_pose_processor import YOLOPoseProcessor
 
 # 定义轨迹选项模型以避免循环导入
 class TrackingOptions:
@@ -13,30 +14,46 @@ class TrackingOptions:
         self.trajectory_length = trajectory_length
         self.trajectory_color = trajectory_color
 
+# 定义处理模式枚举
+class ProcessingMode:
+    OBJECT_TRACKING = "object_tracking"
+    POSE_DETECTION = "pose_detection"
+
+# 定义姿态检测选项
+class PoseOptions:
+    def __init__(self, mask_separation: bool = False):
+        self.mask_separation = mask_separation
+
 class VideoProcessor:
     """视频处理类，负责视频格式转换和优化"""
     
     def __init__(self):
         self.supported_formats = ['.mp4', '.avi', '.mov', '.mkv']
-        self.processor = YOLODeepSORTProcessor('weights/best.pt')
+        self.tracking_processor = YOLODeepSORTProcessor('weights/best.pt')
+        self.pose_processor = YOLOPoseProcessor('weights/yolo11s-pose.pt')
     
     def process_video(self, input_path: Path, original_output_path: Path, processed_output_path: Path, 
-                     tracking_options: Optional[TrackingOptions] = None) -> bool:
+                     processing_mode: str = ProcessingMode.OBJECT_TRACKING,
+                     tracking_options: Optional[TrackingOptions] = None,
+                     pose_options: Optional[PoseOptions] = None) -> bool:
         """
-        处理视频文件，同时保存原始视频（确保Edge浏览器兼容性）和处理后的视频（带目标检测和跟踪）
+        处理视频文件，同时保存原始视频（确保Edge浏览器兼容性）和处理后的视频
         
         Args:
             input_path: 输入视频路径
             original_output_path: 原始视频输出路径（仅转换格式）
-            processed_output_path: 处理后视频输出路径（带检测和跟踪）
-            tracking_options: 轨迹显示选项
+            processed_output_path: 处理后视频输出路径
+            processing_mode: 处理模式（object_tracking 或 pose_detection）
+            tracking_options: 目标跟踪选项
+            pose_options: 姿态检测选项
             
         Returns:
             bool: 处理是否成功
         """
-        # 清除轨迹历史
-        self.processor.trajectory_history.clear()
-            
+        # 根据处理模式清除相应的历史记录
+        if processing_mode == ProcessingMode.OBJECT_TRACKING:
+            self.tracking_processor.trajectory_history.clear()
+        
         try:
             # 检查输入文件是否存在
             if not input_path.exists():
@@ -72,6 +89,9 @@ class VideoProcessor:
                 frame_count = 0
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 
+                print(f"开始处理视频: {input_path}")
+                print(f"处理模式: {processing_mode}")
+                
                 # 读取并写入每一帧
                 while True:
                     ret, frame = cap.read()
@@ -81,17 +101,29 @@ class VideoProcessor:
                     # 写入原始帧到原始视频
                     original_out.write(frame)
                     
-                    # 根据轨迹选项处理帧并写入处理后的视频
-                    if tracking_options and tracking_options.show_trajectory:
-                        # 使用轨迹显示功能
-                        _, processed_frame = self.processor.process_detection_results(
-                            frame, 
-                            trajectory_length=tracking_options.trajectory_length,
-                            trajectory_color=tracking_options.trajectory_color
+                    # 根据处理模式处理帧
+                    if processing_mode == ProcessingMode.OBJECT_TRACKING:
+                        # 目标跟踪模式
+                        if tracking_options and tracking_options.show_trajectory:
+                            # 使用轨迹显示功能
+                            _, processed_frame = self.tracking_processor.process_detection_results(
+                                frame, 
+                                trajectory_length=tracking_options.trajectory_length,
+                                trajectory_color=tracking_options.trajectory_color
+                            )
+                        else:
+                            # 使用普通处理（不显示轨迹）
+                            _, processed_frame = self.tracking_processor.process_detection_results(frame)
+                    
+                    elif processing_mode == ProcessingMode.POSE_DETECTION:
+                        # 姿态检测模式
+                        mask_separation = pose_options.mask_separation if pose_options else False
+                        _, processed_frame = self.pose_processor.process_pose_detection(
+                            frame, mask_separation=mask_separation
                         )
                     else:
-                        # 使用普通处理（不显示轨迹）
-                        _, processed_frame = self.processor.process_detection_results(frame)
+                        # 默认使用目标跟踪
+                        _, processed_frame = self.tracking_processor.process_detection_results(frame)
                     
                     processed_out.write(processed_frame)
                     

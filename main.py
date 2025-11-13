@@ -7,7 +7,7 @@ import os
 import uuid
 import shutil
 from pathlib import Path
-from video_processor import VideoProcessor, TrackingOptions
+from video_processor import VideoProcessor, TrackingOptions, ProcessingMode, PoseOptions
 
 # 创建应用实例
 app = FastAPI(title="视频处理应用", description="一个简单易用的视频上传、处理和下载应用")
@@ -37,9 +37,11 @@ async def read_root(request: Request):
 @app.post("/upload/")
 async def upload_video(
     file: UploadFile = File(...),
+    processing_mode: str = Form("object_tracking"),
     show_trajectory: bool = Form(False),
     trajectory_length: int = Form(30),
-    trajectory_color: str = Form("red")
+    trajectory_color: str = Form("red"),
+    mask_separation: bool = Form(False)
 ):
     """上传视频文件"""
     # 验证文件类型
@@ -60,12 +62,21 @@ async def upload_video(
     original_path = UPLOAD_DIR / original_filename
     processed_path = PROCESSED_DIR / processed_filename
     
-    # 创建轨迹选项
-    tracking_options = TrackingOptions(
-        show_trajectory=show_trajectory,
-        trajectory_length=trajectory_length,
-        trajectory_color=trajectory_color
-    )
+    # 根据处理模式创建相应的选项
+    if processing_mode == "object_tracking":
+        # 目标跟踪模式
+        tracking_options = TrackingOptions(
+            show_trajectory=show_trajectory,
+            trajectory_length=trajectory_length,
+            trajectory_color=trajectory_color
+        )
+        pose_options = None
+    else:
+        # 姿态检测模式
+        tracking_options = None
+        pose_options = PoseOptions(
+            mask_separation=mask_separation
+        )
     
     try:
         # 同时处理原始视频和处理后的视频
@@ -73,7 +84,9 @@ async def upload_video(
             temp_path, 
             original_path,
             processed_path,
-            tracking_options=tracking_options
+            processing_mode=ProcessingMode.OBJECT_TRACKING if processing_mode == "object_tracking" else ProcessingMode.POSE_DETECTION,
+            tracking_options=tracking_options,
+            pose_options=pose_options
         )
         
         if not success:
@@ -87,9 +100,11 @@ async def upload_video(
             "file_id": file_id,
             "original_url": f"/download/original/{file_id}",
             "processed_url": f"/download/processed/{file_id}",
+            "processing_mode": processing_mode,
             "show_trajectory": show_trajectory,
             "trajectory_length": trajectory_length,
             "trajectory_color": trajectory_color,
+            "mask_separation": mask_separation,
             "message": "视频上传和处理成功"
         }
     

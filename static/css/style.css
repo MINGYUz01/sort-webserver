@@ -103,13 +103,21 @@ body {
 /* 文件信息样式 */
 .file-info {
     background: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-radius: 15px;
+    padding: 25px;
+    margin-top: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.file-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
 }
 
 .file-details {
@@ -119,23 +127,34 @@ body {
 }
 
 .file-details i {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: #667eea;
 }
 
 .file-details div {
     display: flex;
     flex-direction: column;
+    gap: 5px;
 }
 
 .file-details span:first-child {
     font-weight: bold;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+    color: #333;
 }
 
 .file-details span:last-child {
     color: #666;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+}
+
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* 按钮样式 */
@@ -299,31 +318,187 @@ body {
     padding: 20px 0;
 }
 
-/* 轨迹显示选项样式 */
-.tracking-options {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-    border-left: 4px solid #667eea;
+/* 选项区域通用样式 */
+.processing-mode,
+.tracking-options,
+.pose-options {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+    min-width: 300px; /* 确保最小宽度一致 */
+    width: 100%; /* 确保宽度自适应但保持一致 */
 }
 
-.tracking-options h4 {
-    margin-bottom: 15px;
-    color: #333;
-    font-size: 1.1rem;
+.processing-mode:hover,
+.tracking-options:hover,
+.pose-options:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+    border-color: #007bff;
+}
+
+.processing-mode {
+    border-left-color: #667eea;
+}
+
+.tracking-options {
+    border-left-color: #28a745;
+}
+
+.pose-options {
+    border-left-color: #ff6b6b;
+}
+
+.processing-mode h4,
+.tracking-options h4,
+.pose-options h4 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 1.3em;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.processing-mode h4 i {
+    color: #667eea;
+    background: #f8f9ff;
+    padding: 8px;
+    border-radius: 8px;
 }
 
 .tracking-options h4 i {
+    color: #28a745;
+    background: #f8f9ff;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.pose-options h4 i {
+    color: #ff6b6b;
+    background: #f8f9ff;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+/* 单选按钮样式 */
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    border: 2px solid #e8e8e8;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fdfdfd;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.radio-label:hover {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f8ff 100%);
+    transform: translateX(5px);
+}
+
+.radio-label input[type="radio"] {
+    display: none;
+}
+
+.radiomark {
+    width: 22px;
+    height: 22px;
+    border: 2px solid #d0d0d0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    background: white;
+    position: relative;
+}
+
+.radio-label input[type="radio"]:checked + .radiomark {
+    border-color: #667eea;
+    background: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.radio-label input[type="radio"]:checked + .radiomark::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    animation: pulse 0.3s ease;
+}
+
+.radio-label input[type="radio"]:checked ~ .radio-text {
     color: #667eea;
-    margin-right: 8px;
+    font-weight: 700;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.8); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.radio-label i {
+    color: #667eea;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.radio-label input[type="radio"]:checked ~ i {
+    color: #667eea;
+}
+
+/* 姿态检测选项样式 */
+.pose-options small {
+    display: block;
+    margin-top: 8px;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    padding-left: 34px;
 }
 
 .option-group {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9ff 0%, #f0f8ff 100%);
+    border-radius: 12px;
+    border: 1px solid #e0e8ff;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.option-group::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #667eea, #764ba2);
+}
+
+.option-group:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
 }
 
 .option-group:last-child {
@@ -332,23 +507,29 @@ body {
 
 .option-group label {
     font-weight: 600;
-    color: #555;
-    min-width: 120px;
+    color: #333;
+    min-width: 140px;
+    font-size: 1rem;
 }
 
 .option-group select {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
     background: white;
-    font-size: 0.9rem;
-    min-width: 120px;
+    font-size: 0.95rem;
+    min-width: 140px;
+    transition: all 0.3s ease;
 }
 
 .option-group select:focus {
     outline: none;
     border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.option-group select:hover {
+    border-color: #667eea;
 }
 
 .checkbox-label {
@@ -422,7 +603,8 @@ body {
         justify-content: center;
     }
     
-    .tracking-options {
+    .tracking-options,
+    .pose-options {
         margin: 15px 0;
         padding: 15px;
     }
