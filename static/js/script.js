@@ -25,6 +25,7 @@ const newUploadBtn = document.getElementById('newUploadBtn');
 // 事件监听器
 document.addEventListener('DOMContentLoaded', function () {
     initializeEventListeners();
+    initializeProcessingMode();
     initializeTrackingOptions();
 });
 
@@ -45,6 +46,36 @@ function initializeEventListeners() {
 
     // 新上传按钮事件
     newUploadBtn.addEventListener('click', resetInterface);
+}
+
+// 处理模式初始化
+function initializeProcessingMode() {
+    const processingModeRadios = document.querySelectorAll('input[name="processingMode"]');
+    
+    // 监听处理模式变化
+    processingModeRadios.forEach(radio => {
+        radio.addEventListener('change', updateProcessingMode);
+    });
+    
+    // 初始状态设置
+    updateProcessingMode();
+}
+
+// 更新处理模式显示
+function updateProcessingMode() {
+    const selectedMode = document.querySelector('input[name="processingMode"]:checked').value;
+    const trackingOptions = document.getElementById('trackingOptions');
+    const poseOptions = document.getElementById('poseOptions');
+    
+    if (selectedMode === 'object_tracking') {
+        // 显示目标跟踪选项，隐藏姿态检测选项
+        trackingOptions.style.display = 'block';
+        poseOptions.style.display = 'none';
+    } else {
+        // 显示姿态检测选项，隐藏目标跟踪选项
+        trackingOptions.style.display = 'none';
+        poseOptions.style.display = 'block';
+    }
 }
 
 // 轨迹显示选项初始化
@@ -172,12 +203,18 @@ async function handleUpload() {
         const formData = new FormData();
         formData.append('file', currentFile);
 
+        // 添加处理模式选项
+        const processingMode = document.querySelector('input[name="processingMode"]:checked').value;
+        const maskSeparation = document.getElementById('maskSeparation').checked;
+        
         // 添加轨迹显示选项
         const showTrajectory = document.getElementById('showTrajectory').checked;
         const trajectoryLength = document.getElementById('trajectoryLength').value;
         const trajectoryColor = document.getElementById('trajectoryColor').value;
         
         // 确保布尔值正确传递，使用字符串"true"或"false"
+        formData.append('processing_mode', processingMode);
+        formData.append('mask_separation', maskSeparation ? "true" : "false");
         formData.append('show_trajectory', showTrajectory ? "true" : "false");
         formData.append('trajectory_length', trajectoryLength);
         formData.append('trajectory_color', trajectoryColor);

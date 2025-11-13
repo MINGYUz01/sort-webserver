@@ -24,51 +24,84 @@
                     <input type="file" id="fileInput" accept=".mp4" style="display: none;">
                 </div>
                 <div class="file-info" id="fileInfo" style="display: none;">
-                    <div class="file-details">
-                        <i class="fas fa-file-video"></i>
-                        <div>
-                            <span id="fileName"></span>
-                            <span id="fileSize"></span>
+                    <div class="file-header">
+                        <div class="file-details">
+                            <i class="fas fa-file-video"></i>
+                            <div>
+                                <span id="fileName"></span>
+                                <span id="fileSize"></span>
+                            </div>
                         </div>
+                        <button class="btn btn-primary" id="uploadBtn">
+                            <i class="fas fa-upload"></i> 上传并处理
+                        </button>
                     </div>
                     
-                    <!-- 轨迹显示选项 -->
-                    <div class="tracking-options">
-                        <h4><i class="fas fa-route"></i> 轨迹显示选项</h4>
-                        <div class="option-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="showTrajectory" checked>
-                                <span class="checkmark"></span>
-                                显示检测对象运动轨迹
-                            </label>
+                    <div class="options-container">
+                        <!-- 处理模式选择 -->
+                        <div class="processing-mode">
+                            <h4><i class="fas fa-cogs"></i> 处理模式选择</h4>
+                            <div class="option-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="processingMode" value="object_tracking" checked>
+                                    <span class="radiomark"></span>
+                                    <i class="fas fa-route"></i> 多目标实时跟踪
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="processingMode" value="pose_detection">
+                                    <span class="radiomark"></span>
+                                    <i class="fas fa-running"></i> 姿态检测
+                                </label>
+                            </div>
                         </div>
-                        <div class="option-group">
-                            <label>轨迹长度（帧数）:</label>
-                            <select id="trajectoryLength">
-                                <option value="10">10帧</option>
-                                <option value="20">20帧</option>
-                                <option value="30" selected>30帧</option>
-                                <option value="50">50帧</option>
-                                <option value="100">100帧</option>
-                                <option value="-1">无限</option>
-                            </select>
+
+                        <!-- 目标跟踪选项 -->
+                        <div class="tracking-options" id="trackingOptions">
+                            <h4><i class="fas fa-route"></i> 目标跟踪选项</h4>
+                            <div class="option-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="showTrajectory" checked>
+                                    <span class="checkmark"></span>
+                                    显示检测对象运动轨迹
+                                </label>
+                            </div>
+                            <div class="option-group">
+                                <label>轨迹长度（帧数）:</label>
+                                <select id="trajectoryLength">
+                                    <option value="10">10帧</option>
+                                    <option value="20">20帧</option>
+                                    <option value="30" selected>30帧</option>
+                                    <option value="50">50帧</option>
+                                    <option value="100">100帧</option>
+                                    <option value="-1">无限</option>
+                                </select>
+                            </div>
+                            <div class="option-group">
+                                <label>轨迹颜色:</label>
+                                <select id="trajectoryColor">
+                                    <option value="red" selected>红色</option>
+                                    <option value="green">绿色</option>
+                                    <option value="blue">蓝色</option>
+                                    <option value="yellow">黄色</option>
+                                    <option value="cyan">青色</option>
+                                    <option value="magenta">洋红色</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="option-group">
-                            <label>轨迹颜色:</label>
-                            <select id="trajectoryColor">
-                                <option value="red" selected>红色</option>
-                                <option value="green">绿色</option>
-                                <option value="blue">蓝色</option>
-                                <option value="yellow">黄色</option>
-                                <option value="cyan">青色</option>
-                                <option value="magenta">洋红色</option>
-                            </select>
+
+                        <!-- 姿态检测选项 -->
+                        <div class="pose-options" id="poseOptions" style="display: none;">
+                            <h4><i class="fas fa-running"></i> 姿态检测选项</h4>
+                            <div class="option-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="maskSeparation">
+                                    <span class="checkmark"></span>
+                                    掩码分离（黑背景显示姿态结果）
+                                </label>
+                                <small>如果勾选，将显示原视频和黑背景姿态结果；如果不勾选，姿态结果将叠加到原视频上</small>
+                            </div>
                         </div>
                     </div>
-                    
-                    <button class="btn btn-primary" id="uploadBtn">
-                        <i class="fas fa-upload"></i> 上传并处理
-                    </button>
                 </div>
             </section>
 
