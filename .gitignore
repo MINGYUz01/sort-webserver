@@ -160,6 +160,8 @@ Thumbs.db
 # Video processing temporary files
 uploads/
 processed/
+runs/
+test_video/
 *.mp4.tmp
 *.avi.tmp
 
